@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>Network Traffic Monitor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        .alert {
+            background-color: #ffdddd;
+            color: #d8000c;
+            border: 1px solid #d8000c;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+
+        .normal {
+            background-color: #ddffdd;
+            color: #005700;
+            border: 1px solid #005700;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+
+        #alerts, #normal-traffic {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            background: #fff;
+        }
+    </style>
+</head>
+<body>
+    <h1>Network Traffic Monitor</h1>
+    
+    <div id="alerts">
+        <h2>Alerts</h2>
+        <ul id="alert-list"></ul>
+    </div>
+
+    <div id="normal-traffic">
+        <h2>Normal Traffic</h2>
+        <ul id="normal-list"></ul>
+    </div>
+
+    <script>
+        setInterval(() => {
+            fetch('/alerts')
+                .then(response => response.json())
+                .then(data => {
+                    const alertList = document.getElementById('alert-list');
+                    alertList.innerHTML = '';
+                    data.forEach(alert => {
+                        const alertItem = document.createElement('li');
+                        alertItem.className = 'alert';
+                        alertItem.textContent = `Anomaly detected: ${JSON.stringify(alert)}`;
+                        alertList.appendChild(alertItem);
+                    });
+                });
+
+            fetch('/normal_traffic')  // Assuming you have an endpoint for normal traffic
+                .then(response => response.json())
+                .then(data => {
+                    const normalList = document.getElementById('normal-list');
+                    normalList.innerHTML = '';
+                    data.forEach(normal => {
+                        const normalItem = document.createElement('li');
+                        normalItem.className = 'normal';
+                        normalItem.textContent = `Normal traffic: ${JSON.stringify(normal)}`;
+                        normalList.appendChild(normalItem);
+                    });
+                });
+        }, 10000); // Refresh every 10 seconds
+    </script>
+</body>
+</html>
