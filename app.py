@@ -16,33 +16,44 @@ alerts = []
 
 def monitor_traffic():
     global alerts
-    csv_file = 'traffic.csv'
+    csv_file = 'updated_file.csv'
     last_line_count = 0
 
     while True:
         current_line_count = sum(1 for line in open(csv_file))
         if current_line_count > last_line_count:
-            new_data = pd.read_csv(csv_file)
-            print(new_data.columns)  # Debugging line to check columns
+            # Read the CSV file with proper delimiter and quoting
+            new_data = pd.read_csv(csv_file, delimiter=',', quotechar='"')
 
-            # Only drop existing columns
-            columns_to_drop = ['Timestamp', 'Source IP', 'Destination IP', 'Protocol']
-            existing_columns = [col for col in columns_to_drop if col in new_data.columns]
-            new_data.drop(existing_columns, axis=1, inplace=True)
+            # Debugging line to check columns
+            print("Columns in new_data:", new_data.columns)
+
+            # Strip whitespace from column names
+            new_data.columns = new_data.columns.str.strip()
+
+            # Check if required columns exist
+            required_columns = ['Time', 'Length', 'Class']
+            if not all(col in new_data.columns for col in required_columns):
+                print(f"Missing columns: {set(required_columns) - set(new_data.columns)}")
+                last_line_count = current_line_count
+                time.sleep(10)
+                continue  # Skip this iteration if required columns are missing
+
+            # Prepare the data for prediction
+            new_data_cleaned = new_data[['Time', 'Length']]  # Only use Time and Length for prediction
 
             # Standardize and predict
-            X_new = scaler.transform(new_data)
+            X_new = scaler.transform(new_data_cleaned)
             predictions = model.predict(X_new)
 
             # Print predictions for debugging
             print("Predictions:", predictions)
 
             # Add predictions to the DataFrame
-            new_data['Anomaly'] = predictions
-            new_data['Anomaly'] = np.where(new_data['Anomaly'] == -1, 'Anomaly', 'Normal')
+            new_data['Predicted_Class'] = np.where(predictions == 1, 'Normal', 'Anomaly')  # Adjust based on your model's output
 
             # Check for anomalies and create alerts
-            anomalies = new_data[new_data['Anomaly'] == 'Anomaly']
+            anomalies = new_data[new_data['Predicted_Class'] == 'Anomaly']
             if not anomalies.empty:
                 alerts.extend(anomalies.to_dict(orient='records'))
 
@@ -61,16 +72,16 @@ def get_alerts():
 @app.route('/normal_traffic')
 def get_normal_traffic():
     # Load the current traffic data
-    traffic_data = pd.read_csv('traffic.csv')  # Load your traffic data
+    traffic_data = pd.read_csv('updated_file.csv')  # Load your traffic data
 
     # Preprocess the data if necessary (e.g., scaling)
-    X = traffic_data.drop(['Timestamp', 'Source IP', 'Destination IP', 'Protocol'], axis=1)
+    X = traffic_data[['Time', 'Length']]  # Select relevant features
 
     # Standardize the data
     X_scaled = scaler.transform(X)
 
     # Predict using the trained model
-    predictions = model.predict(X_scaled)  # Assuming 'model' is your trained model
+    predictions = model.predict(X_scaled)
 
     # Add predictions to the DataFrame
     traffic_data['Anomaly'] = predictions
@@ -82,6 +93,7 @@ def get_normal_traffic():
     normal_list = normal_traffic.to_dict(orient='records')
     
     return jsonify(normal_list)
+
 if __name__ == '__main__':
     threading.Thread(target=monitor_traffic, daemon=True).start()
     app.run(debug=True)

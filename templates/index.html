@@ -8,52 +8,115 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f4f4f4;
-        }
-
-        h1 {
+            margin: 0;
+            padding: 0;
+            background-color: #f4f7fa;
             color: #333;
         }
 
-        .alert {
-            background-color: #ffdddd;
-            color: #d8000c;
-            border: 1px solid #d8000c;
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 5px;
-        }
-
-        .normal {
-            background-color: #ddffdd;
-            color: #005700;
-            border: 1px solid #005700;
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 5px;
+        h1 {
+            background-color: #4CAF50;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+            margin: 0;
         }
 
         #alerts, #normal-traffic {
-            margin-top: 20px;
+            margin: 20px;
             padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            background-color: #fff;
         }
+
+        h2 {
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        /* Flex container for alert and normal traffic cards */
+        .card-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        /* Card style for individual alert/normal item */
+        .alert-item, .normal-item {
+            width: calc(33.33% - 20px); /* Three items per row, with space between */
+            box-sizing: border-box;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-left: 5px solid;
+            background-color: #fff;
+        }
+
+        .alert-item {
+            background-color: #ffebeb;
+            border-left-color: #d8000c;
+            color: #d8000c;
+        }
+
+        .normal-item {
+            background-color: #e8f5e9;
+            border-left-color: #388e3c;
+            color: #388e3c;
+        }
+
+        .item-details {
+            font-size: 1em;
+            color: #333;
+        }
+
+        .item-details span {
+            font-weight: bold;
+        }
+
+        .timestamp {
+            font-size: 0.85em;
+            color: #888;
+            margin-left: 15px;
+        }
+
+        .loading {
+            text-align: center;
+            font-size: 1.2em;
+            color: #888;
+        }
+
+        /* Ensure proper spacing and alignment on smaller screens */
+        @media (max-width: 768px) {
+            .alert-item, .normal-item {
+                width: calc(50% - 20px); /* Two items per row on smaller screens */
+            }
+        }
+
+        @media (max-width: 480px) {
+            .alert-item, .normal-item {
+                width: 100%; /* One item per row on very small screens */
+            }
+        }
+
     </style>
 </head>
 <body>
     <h1>Network Traffic Monitor</h1>
-    
+
     <div id="alerts">
-        <h2>Alerts</h2>
-        <ul id="alert-list"></ul>
+        <h2>Alerts (Anomalies Detected)</h2>
+        <div id="alert-list" class="loading">Loading alerts...</div>
     </div>
 
     <div id="normal-traffic">
         <h2>Normal Traffic</h2>
-        <ul id="normal-list"></ul>
+        <div id="normal-list" class="loading">Loading normal traffic...</div>
     </div>
 
     <script>
@@ -62,26 +125,76 @@
                 .then(response => response.json())
                 .then(data => {
                     const alertList = document.getElementById('alert-list');
-                    alertList.innerHTML = '';
-                    data.forEach(alert => {
-                        const alertItem = document.createElement('li');
-                        alertItem.className = 'alert';
-                        alertItem.textContent = `Anomaly detected: ${JSON.stringify(alert)}`;
-                        alertList.appendChild(alertItem);
-                    });
+                    alertList.innerHTML = '';  // Clear current content
+                    if (data.length === 0) {
+                        alertList.innerHTML = '<p>No anomalies detected.</p>';
+                    } else {
+                        const alertContainer = document.createElement('div');
+                        alertContainer.className = 'card-container';
+                        data.forEach(alert => {
+                            const alertItem = document.createElement('div');
+                            alertItem.className = 'alert-item';
+
+                            const alertDetails = document.createElement('div');
+                            alertDetails.className = 'item-details';
+                            alertDetails.innerHTML = `
+                                <p><span>Time:</span> ${alert.Time}s</p>
+                                <p><span>Length:</span> ${alert.Length} bytes</p>
+                                <p><span>Source:</span> ${alert.Source}</p>
+                                <p><span>Destination:</span> ${alert.Destination}</p>
+                                <p><span>Protocol:</span> ${alert.Protocol}</p>
+                            `;
+
+                            // Generate a timestamp when the alert is fetched
+                            const currentTimestamp = new Date();
+                            const alertTimestamp = document.createElement('span');
+                            alertTimestamp.className = 'timestamp';
+                            alertTimestamp.textContent = `Detected at: ${currentTimestamp.toLocaleString()}`;
+
+                            alertItem.appendChild(alertDetails);
+                            alertItem.appendChild(alertTimestamp);
+                            alertContainer.appendChild(alertItem);
+                        });
+                        alertList.appendChild(alertContainer);
+                    }
                 });
 
-            fetch('/normal_traffic')  // Assuming you have an endpoint for normal traffic
+            fetch('/normal_traffic')
                 .then(response => response.json())
                 .then(data => {
                     const normalList = document.getElementById('normal-list');
-                    normalList.innerHTML = '';
-                    data.forEach(normal => {
-                        const normalItem = document.createElement('li');
-                        normalItem.className = 'normal';
-                        normalItem.textContent = `Normal traffic: ${JSON.stringify(normal)}`;
-                        normalList.appendChild(normalItem);
-                    });
+                    normalList.innerHTML = '';  // Clear current content
+                    if (data.length === 0) {
+                        normalList.innerHTML = '<p>No normal traffic available.</p>';
+                    } else {
+                        const normalContainer = document.createElement('div');
+                        normalContainer.className = 'card-container';
+                        data.forEach(normal => {
+                            const normalItem = document.createElement('div');
+                            normalItem.className = 'normal-item';
+
+                            const normalDetails = document.createElement('div');
+                            normalDetails.className = 'item-details';
+                            normalDetails.innerHTML = `
+                                <p><span>Time:</span> ${normal.Time}s</p>
+                                <p><span>Length:</span> ${normal.Length} bytes</p>
+                                <p><span>Source:</span> ${normal.Source}</p>
+                                <p><span>Destination:</span> ${normal.Destination}</p>
+                                <p><span>Protocol:</span> ${normal.Protocol}</p>
+                            `;
+
+                            // Generate a timestamp when the normal traffic is fetched
+                            const currentTimestamp = new Date();
+                            const normalTimestamp = document.createElement('span');
+                            normalTimestamp.className = 'timestamp';
+                            normalTimestamp.textContent = `Timestamp: ${currentTimestamp.toLocaleString()}`;
+
+                            normalItem.appendChild(normalDetails);
+                            normalItem.appendChild(normalTimestamp);
+                            normalContainer.appendChild(normalItem);
+                        });
+                        normalList.appendChild(normalContainer);
+                    }
                 });
         }, 10000); // Refresh every 10 seconds
     </script>
