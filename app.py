@@ -16,7 +16,7 @@ alerts = []
 
 def monitor_traffic():
     global alerts
-    csv_file = 'updated_file.csv'
+    csv_file = 'updated_data_net.csv'
     last_line_count = 0
 
     while True:
@@ -32,7 +32,7 @@ def monitor_traffic():
             new_data.columns = new_data.columns.str.strip()
 
             # Check if required columns exist
-            required_columns = ['Time', 'Length', 'Class']
+            required_columns = ['Time', 'Length']
             if not all(col in new_data.columns for col in required_columns):
                 print(f"Missing columns: {set(required_columns) - set(new_data.columns)}")
                 last_line_count = current_line_count
@@ -50,7 +50,7 @@ def monitor_traffic():
             print("Predictions:", predictions)
 
             # Add predictions to the DataFrame
-            new_data['Predicted_Class'] = np.where(predictions == 1, 'Normal', 'Anomaly')  # Adjust based on your model's output
+            new_data['Predicted_Class'] = np.where(predictions == 1, 'Normal', 'Anomaly')
 
             # Check for anomalies and create alerts
             anomalies = new_data[new_data['Predicted_Class'] == 'Anomaly']
@@ -67,15 +67,21 @@ def index():
 
 @app.route('/alerts')
 def get_alerts():
-    return jsonify(alerts)
+    global alerts
+
+    # Replace NaN values with None or an empty string
+    alerts_df = pd.DataFrame(alerts)
+    alerts_df.fillna('', inplace=True)
+
+    return jsonify(alerts_df.to_dict(orient='records'))
 
 @app.route('/normal_traffic')
 def get_normal_traffic():
     # Load the current traffic data
-    traffic_data = pd.read_csv('updated_file.csv')  # Load your traffic data
+    traffic_data = pd.read_csv('updated_data_net.csv')
 
     # Preprocess the data if necessary (e.g., scaling)
-    X = traffic_data[['Time', 'Length']]  # Select relevant features
+    X = traffic_data[['Time', 'Length']]
 
     # Standardize the data
     X_scaled = scaler.transform(X)
@@ -87,7 +93,10 @@ def get_normal_traffic():
     traffic_data['Anomaly'] = predictions
 
     # Filter normal traffic (assuming 1 indicates normal traffic)
-    normal_traffic = traffic_data[traffic_data['Anomaly'] == 1]  # Adjust based on your model's output
+    normal_traffic = traffic_data[traffic_data['Anomaly'] == 1]
+
+    # Replace NaN values with None or an empty string
+    normal_traffic.fillna('', inplace=True)
 
     # Convert to list of dictionaries for JSON response
     normal_list = normal_traffic.to_dict(orient='records')
