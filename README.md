@@ -1,5 +1,5 @@
 # Packet Anomaly Detection using Random Forest
-
+![Network Traffic Monitor](./images/image.png)
 ## Introduction
 
 In this script, we perform anomaly detection on network packet data using a machine learning approach. The goal is to predict whether network traffic belongs to a normal or anomalous class based on features such as packet time and length.
