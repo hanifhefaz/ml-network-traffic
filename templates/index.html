@@ -12,191 +12,229 @@
             padding: 0;
             background-color: #f4f7fa;
             color: #333;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            align-items: center; /* Center items horizontally */
+            justify-content: center; /* Center items vertically */
         }
-
+    
         h1 {
             background-color: #4CAF50;
             color: #fff;
             padding: 20px;
             text-align: center;
             margin: 0;
+            width: 100%;
+            position: relative; /* Changed to relative */
         }
-
-        #alerts, #normal-traffic {
-            margin: 20px;
+    
+        #container {
+            display: flex;
+            flex-direction: column; /* Stack items vertically */
+            align-items: center; /* Center items horizontally */
+            justify-content: center; /* Center items vertically */
+            width: 100%; /* Full width */
+            margin-top: 20px; /* Space above the container */
+        }
+    
+        #notifications {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 5px solid #4CAF50;
+            border-radius: 8px;
+            padding: 10px;
+            background-color: #fff;
+            width: 20%; /* Stretch to 100% width */
+            max-width: 600px; /* Optional: limit max width */
+            margin-bottom: 20px; /* Space below notifications */
+        }
+    
+        .notification-dot {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: #3978ec;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2em;
+            transition: transform 0.3s;
+        }
+    
+        #heartbeat {
+            width: 100%; /* Stretch to 100% width */
+            max-width: 600px; /* Optional: limit max width */
+            height: 100px;
+            position: relative;
+        }
+    
+        svg {
+            width: 100%;
+            height: 100%;
+        }
+    
+        .heartbeat-path {
+            fill: none;
+            stroke: #4CAF50;
+            stroke-width: 5;
+        }
+    
+        .heartbeat-animation {
+            fill: #d8000c;
+            animation: pulse 0.1s infinite alternate;
+        }
+    
+        @keyframes pulse {
+            0% { r: 10; }
+            100% { r: 15; }
+        }
+    
+        #sponsor-logos {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px; /* Space between heartbeat and logos */
+        }
+    
+        .logo {
+            margin: 0 15px; /* Space between logos */
+            width: 100px; /* Set width for logos */
+        }
+    
+        #modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 2;
+            justify-content: center;
+            align-items: center;
+        }
+    
+        .modal-content {
+            background: white;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            background-color: #fff;
+            width: 80%;
+            max-height: 80%;
+            overflow-y: auto;
+            position: relative;
         }
-
-        h2 {
+    
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
             font-size: 1.5em;
-            color: #333;
-            margin-bottom: 15px;
+            color: #4CAF50;
         }
 
-        /* Flex container for alert and normal traffic cards */
-        .card-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
+        .heartbeat {
+            animation: heartbeat 0.8s infinite; /* Animation duration and infinite loop */
         }
 
-        /* Card style for individual alert/normal item */
-        .alert-item, .normal-item {
-            width: calc(33.33% - 20px); /* Three items per row, with space between */
-            box-sizing: border-box;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            align-items: flex-start;
-            border-left: 5px solid;
-            background-color: #fff;
+        @keyframes heartbeat {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.3); /* Scale up */
+            }
+            100% {
+                transform: scale(1); /* Scale back to original */
+            }
         }
-
-        .alert-item {
-            background-color: #ffebeb;
-            border-left-color: #d8000c;
-            color: #d8000c;
-        }
-
-        .normal-item {
-            background-color: #e8f5e9;
-            border-left-color: #388e3c;
-            color: #388e3c;
-        }
-
-        .item-details {
-            font-size: 1em;
-            color: #333;
-        }
-
-        .item-details span {
-            font-weight: bold;
-        }
-
-        .timestamp {
-            font-size: 0.85em;
-            color: #888;
-            margin-left: 15px;
-        }
-
-        .loading {
-            text-align: center;
-            font-size: 1.2em;
-            color: #888;
-        }
-
-        /* Ensure proper spacing and alignment on smaller screens */
+    
         @media (max-width: 768px) {
-            .alert-item, .normal-item {
-                width: calc(50% - 20px); /* Two items per row on smaller screens */
+            #notifications, #heartbeat {
+                width: 100%;
+                margin: 10px 0;
             }
         }
-
-        @media (max-width: 480px) {
-            .alert-item, .normal-item {
-                width: 100%; /* One item per row on very small screens */
-            }
-        }
-
     </style>
 </head>
 <body>
     <h1>Network Traffic Monitor</h1>
 
-    <div id="alerts">
-        <h2>Alerts (Anomalies Detected)</h2>
-        <div id="alert-list" class="loading">Loading alerts...</div>
+    <div id="container">
+        <div id="notifications">
+            <div class="notification-dot heartbeat" id="alert-count">0</div>
+        </div>
+
+        <div id="heartbeat">
+            <svg>
+                <path class="heartbeat-path" id="heartbeat-path" 
+                      d="M0,50 C25,0 75,0 100,50 S175,100 200,50 
+                         S275,0 300,50 S375,100 400,50 
+                         S475,0 500,50 S575,100 600,50 
+                         S675,0 700,50 S775,100 800,50" />
+                <circle class="heartbeat-animation" r="10">
+                    <animateMotion repeatCount="indefinite" dur="10s">
+                        <mpath href="#heartbeat-path" />
+                    </animateMotion>
+                </circle>
+            </svg>
+        </div>
     </div>
 
-    <div id="normal-traffic">
-        <h2>Normal Traffic</h2>
-        <div id="normal-list" class="loading">Loading normal traffic...</div>
+    <div id="sponsor-logos">
+        <img src="{{ url_for('static', filename='cisco.png') }}" alt="Sponsor Logo 1" class="logo">
+        <img src="{{ url_for('static', filename='dell.png') }}" alt="Sponsor Logo 2" class="logo">
+        <img src="{{ url_for('static', filename='microsoft.png') }}" alt="Sponsor Logo 3" class="logo">
+    </div>
+
+    <div id="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>Alert Details</h2>
+            <div id="modal-details"></div>
+        </div>
     </div>
 
     <script>
+        let alertCount = 0;
+
+        document.getElementById('alert-count').addEventListener('click', function() {
+            this.style.transform = 'scale(2)';
+            setTimeout(() => {
+                document.getElementById('modal').style.display = 'flex';
+                this.style.transform = 'scale(1)';
+            }, 300);
+        });
+
+        document.querySelector('.close-btn').addEventListener('click', function() {
+            document.getElementById('modal').style.display = 'none';
+        });
+
         setInterval(() => {
             fetch('/alerts')
                 .then(response => response.json())
                 .then(data => {
-                    const alertList = document.getElementById('alert-list');
-                    alertList.innerHTML = '';  // Clear current content
                     if (data.length === 0) {
-                        alertList.innerHTML = '<p>No anomalies detected.</p>';
+                        alertCount = 0;
+                        document.getElementById('modal-details').innerHTML = '';
                     } else {
-                        const alertContainer = document.createElement('div');
-                        alertContainer.className = 'card-container';
-                        data.forEach(alert => {
-                            const alertItem = document.createElement('div');
-                            alertItem.className = 'alert-item';
-
-                            const alertDetails = document.createElement('div');
-                            alertDetails.className = 'item-details';
-                            alertDetails.innerHTML = `
-                                <p><span>Time:</span> ${alert.Time}s</p>
-                                <p><span>Length:</span> ${alert.Length} bytes</p>
-                                <p><span>Source:</span> ${alert.Source}</p>
-                                <p><span>Destination:</span> ${alert.Destination}</p>
-                                <p><span>Protocol:</span> ${alert.Protocol}</p>
-                            `;
-
-                            // Generate a timestamp when the alert is fetched
-                            const currentTimestamp = new Date();
-                            const alertTimestamp = document.createElement('span');
-                            alertTimestamp.className = 'timestamp';
-                            alertTimestamp.textContent = `Detected at: ${currentTimestamp.toLocaleString()}`;
-
-                            alertItem.appendChild(alertDetails);
-                            alertItem.appendChild(alertTimestamp);
-                            alertContainer.appendChild(alertItem);
-                        });
-                        alertList.appendChild(alertContainer);
+                        alertCount = data.length;
+                        const modalDetails = data.map(alert => `
+                            <p><strong>Time:</strong> ${alert.Time}s</p>
+                            <p><strong>Length:</strong> ${alert.Length} bytes</p>
+                            <p><strong>Source:</strong> ${alert.Source}</p>
+                            <p><strong>Destination:</strong> ${alert.Destination}</p>
+                            <p><strong>Protocol:</strong> ${alert.Protocol}</p>
+                            <hr>
+                        `).join('');
+                        document.getElementById('modal-details').innerHTML = modalDetails;
                     }
+                    document.getElementById('alert-count').textContent = alertCount;
                 });
-
-            fetch('/normal_traffic')
-                .then(response => response.json())
-                .then(data => {
-                    const normalList = document.getElementById('normal-list');
-                    normalList.innerHTML = '';  // Clear current content
-                    if (data.length === 0) {
-                        normalList.innerHTML = '<p>No normal traffic available.</p>';
-                    } else {
-                        const normalContainer = document.createElement('div');
-                        normalContainer.className = 'card-container';
-                        data.forEach(normal => {
-                            const normalItem = document.createElement('div');
-                            normalItem.className = 'normal-item';
-
-                            const normalDetails = document.createElement('div');
-                            normalDetails.className = 'item-details';
-                            normalDetails.innerHTML = `
-                                <p><span>Time:</span> ${normal.Time}s</p>
-                                <p><span>Length:</span> ${normal.Length} bytes</p>
-                                <p><span>Source:</span> ${normal.Source}</p>
-                                <p><span>Destination:</span> ${normal.Destination}</p>
-                                <p><span>Protocol:</span> ${normal.Protocol}</p>
-                            `;
-
-                            // Generate a timestamp when the normal traffic is fetched
-                            const currentTimestamp = new Date();
-                            const normalTimestamp = document.createElement('span');
-                            normalTimestamp.className = 'timestamp';
-                            normalTimestamp.textContent = `Timestamp: ${currentTimestamp.toLocaleString()}`;
-
-                            normalItem.appendChild(normalDetails);
-                            normalItem.appendChild(normalTimestamp);
-                            normalContainer.appendChild(normalItem);
-                        });
-                        normalList.appendChild(normalContainer);
-                    }
-                });
-        }, 10000); // Refresh every 10 seconds
+        }, 10000);
     </script>
 </body>
 </html>

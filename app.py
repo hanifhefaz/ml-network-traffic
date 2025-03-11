@@ -22,37 +22,26 @@ def monitor_traffic():
     while True:
         current_line_count = sum(1 for line in open(csv_file))
         if current_line_count > last_line_count:
-            # Read the CSV file with proper delimiter and quoting
             new_data = pd.read_csv(csv_file, delimiter=',', quotechar='"')
-
-            # Debugging line to check columns
             print("Columns in new_data:", new_data.columns)
 
-            # Strip whitespace from column names
             new_data.columns = new_data.columns.str.strip()
 
-            # Check if required columns exist
             required_columns = ['Time', 'Length']
             if not all(col in new_data.columns for col in required_columns):
                 print(f"Missing columns: {set(required_columns) - set(new_data.columns)}")
                 last_line_count = current_line_count
                 time.sleep(10)
-                continue  # Skip this iteration if required columns are missing
+                continue
 
-            # Prepare the data for prediction
-            new_data_cleaned = new_data[['Time', 'Length']]  # Only use Time and Length for prediction
-
-            # Standardize and predict
+            new_data_cleaned = new_data[['Time', 'Length']]
             X_new = scaler.transform(new_data_cleaned)
             predictions = model.predict(X_new)
 
-            # Print predictions for debugging
             print("Predictions:", predictions)
 
-            # Add predictions to the DataFrame
             new_data['Predicted_Class'] = np.where(predictions == 1, 'Normal', 'Anomaly')
 
-            # Check for anomalies and create alerts
             anomalies = new_data[new_data['Predicted_Class'] == 'Anomaly']
             if not anomalies.empty:
                 alerts.extend(anomalies.to_dict(orient='records'))
@@ -69,36 +58,25 @@ def index():
 def get_alerts():
     global alerts
 
-    # Replace NaN values with None or an empty string
-    alerts_df = pd.DataFrame(alerts)
+    # Filter alerts for only "Anomaly" type
+    anomaly_alerts = [alert for alert in alerts if alert.get('Predicted_Class') == 'Anomaly']
+
+    alerts_df = pd.DataFrame(anomaly_alerts)
     alerts_df.fillna('', inplace=True)
 
     return jsonify(alerts_df.to_dict(orient='records'))
 
 @app.route('/normal_traffic')
 def get_normal_traffic():
-    # Load the current traffic data
     traffic_data = pd.read_csv('updated_data_net.csv')
-
-    # Preprocess the data if necessary (e.g., scaling)
     X = traffic_data[['Time', 'Length']]
-
-    # Standardize the data
     X_scaled = scaler.transform(X)
-
-    # Predict using the trained model
     predictions = model.predict(X_scaled)
 
-    # Add predictions to the DataFrame
     traffic_data['Anomaly'] = predictions
-
-    # Filter normal traffic (assuming 1 indicates normal traffic)
     normal_traffic = traffic_data[traffic_data['Anomaly'] == 1]
 
-    # Replace NaN values with None or an empty string
     normal_traffic.fillna('', inplace=True)
-
-    # Convert to list of dictionaries for JSON response
     normal_list = normal_traffic.to_dict(orient='records')
     
     return jsonify(normal_list)
