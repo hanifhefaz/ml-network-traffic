@@ -49,7 +49,14 @@ def monitor_traffic():
             last_line_count = current_line_count
 
         time.sleep(10)
+# def send_slack_notification(message):
+#     webhook_url = 'https://hooks.slack.com/services/your/app/hook/url'
+#     payload = {'text': message}
+#     requests.post(webhook_url, json=payload)
 
+# # Usage
+# anomaly_message = "Anomaly detected in the system at 12:00 PM."
+# send_slack_notification(anomaly_message)
 @app.route('/')
 def index():
     return render_template('index.html', alerts=alerts)
